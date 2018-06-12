@@ -1,9 +1,55 @@
+//////////////////////////////////////////////////////////////////////
+// ARGUMENTS
+//////////////////////////////////////////////////////////////////////
+
 var target = Argument("target", "Default");
+var solution = "./source/ChakraCore.NET.sln";
+var testProject = "./source/ChakraCore.NET.UnitTest";
+
+//////////////////////////////////////////////////////////////////////
+// TASKS
+//////////////////////////////////////////////////////////////////////
+
+Task("Clean")
+  .Does(() =>
+  {
+      Information("Cleanup");
+      CleanDirectories("./source/**/bin");
+      CleanDirectories("./source/**/obj");
+  });
+
+Task("Restore-NuGet-Packages")
+  .IsDependentOn("Clean")
+  .Does(() =>
+  {
+    DotNetCoreRestore(solution);
+  });
+
+Task("Build")
+  .IsDependentOn("Restore-NuGet-Packages")
+  .Does(() => 
+  {
+    MSBuild(solution);
+  });
+
+Task("Run-Unit-Tests")
+  .IsDependentOn("Build")
+  .Does(() =>
+  {
+    DotNetCoreTest(testProject);
+  })
+  .DeferOnError();
+
+//////////////////////////////////////////////////////////////////////
+// TASK TARGETS
+//////////////////////////////////////////////////////////////////////
 
 Task("Default")
-  .Does(() =>
-{
-    MSBuild("./source/ChakraCore.NET.sln");
-});
+  .IsDependentOn("Build")
+  .IsDependentOn("Run-Unit-Tests");
+
+//////////////////////////////////////////////////////////////////////
+// EXECUTION
+//////////////////////////////////////////////////////////////////////
 
 RunTarget(target);
